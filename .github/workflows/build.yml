@@ -14,7 +14,7 @@ env:
 
 jobs:
   build:
-    name: Build ${{ matrix.os }} (${{ matrix.avx2 == 'true' && 'AVX2' || 'No AVX2' }})
+    name: Build ${{ matrix.os }} (${{ matrix.avx2 == true && 'AVX2' || 'No AVX2' }})
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -37,15 +37,15 @@ jobs:
         run: bun install
 
       - name: Build (AVX2)
-        if: matrix.avx2 == 'true'
+        if: matrix.avx2 == true
         run: bun run ./scripts/build.ts --compile
 
       - name: Build (No AVX2 - Compatible)
-        if: matrix.avx2 == 'false'
+        if: matrix.avx2 == false
         run: bun run ./scripts/build.ts --compile --no-avx2
 
       - name: Rename artifacts (Linux AVX2)
-        if: matrix.os == 'ubuntu-latest' && matrix.avx2 == 'true'
+        if: matrix.os == 'ubuntu-latest' && matrix.avx2 == true
         run: |
           mkdir -p artifacts
           if [ -f cli ]; then
@@ -53,7 +53,7 @@ jobs:
           fi
 
       - name: Rename artifacts (Linux No AVX2)
-        if: matrix.os == 'ubuntu-latest' && matrix.avx2 == 'false'
+        if: matrix.os == 'ubuntu-latest' && matrix.avx2 == false
         run: |
           mkdir -p artifacts
           if [ -f cli ]; then
@@ -61,7 +61,7 @@ jobs:
           fi
 
       - name: Rename artifacts (Windows AVX2)
-        if: matrix.os == 'windows-latest' && matrix.avx2 == 'true'
+        if: matrix.os == 'windows-latest' && matrix.avx2 == true
         run: |
           mkdir -p artifacts
           if (Test-Path cli.exe) {
@@ -70,7 +70,7 @@ jobs:
         shell: pwsh
 
       - name: Rename artifacts (Windows No AVX2)
-        if: matrix.os == 'windows-latest' && matrix.avx2 == 'false'
+        if: matrix.os == 'windows-latest' && matrix.avx2 == false
         run: |
           mkdir -p artifacts
           if (Test-Path cli.exe) {
@@ -81,7 +81,7 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: claude-${{ matrix.os == 'ubuntu-latest' && 'linux' || 'windows' }}-${{ matrix.avx2 == 'true' && 'avx2' || 'no-avx2' }}
+          name: claude-${{ matrix.os == 'ubuntu-latest' && 'linux' || 'windows' }}-${{ matrix.avx2 == true && 'avx2' || 'no-avx2' }}
           path: artifacts/
           retention-days: 30
 
