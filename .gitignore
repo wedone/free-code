@@ -1,5 +1,27 @@
-node_modules/
-dist/
+# Compiled binaries
 cli
+cli.exe
 cli-dev
-openclaw/
+cli-dev.exe
+dist/
+
+# Dependencies
+node_modules/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+*.tsbuildinfo
+
+# Logs
+*.log
+
+# Environment
+.env
+.env.local

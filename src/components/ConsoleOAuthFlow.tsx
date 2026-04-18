@@ -41,6 +41,9 @@ type OAuthStatus = {
   state: 'creating_api_key';
 } // Got access token, creating API key
 | {
+  state: 'bailian_api_key_input';
+} // Bailian API key input
+| {
   state: 'about_to_retry';
   nextState: OAuthStatus;
 } | {
@@ -378,7 +381,7 @@ type OAuthStatusMessageProps = {
   setLoginWithCodex: (value: boolean) => void;
 };
 function OAuthStatusMessage(t0) {
-  const $ = _c(52);
+  const $ = _c(69);
   const {
     oauthStatus,
     mode,
@@ -440,6 +443,9 @@ function OAuthStatusMessage(t0) {
             label: <Text>3rd-party platform ·{" "}<Text dimColor={true}>Amazon Bedrock, Microsoft Foundry, or Vertex AI</Text>{"\n"}</Text>,
             value: "platform"
           }, {
+            label: <Text>Ali Bailian account ·{" "}<Text dimColor={true}>API usage billing (阿里百炼)</Text>{"\n"}</Text>,
+            value: "bailian"
+          }, {
             label: <Text>OpenAI Codex account ·{" "}<Text dimColor={true}>ChatGPT Plus/Pro subscription</Text>{"\n"}</Text>,
             value: "codex"
           }];
@@ -454,6 +460,11 @@ function OAuthStatusMessage(t0) {
                 logEvent("tengu_oauth_platform_selected", {});
                 setOAuthStatus({
                   state: "platform_setup"
+                });
+              } else if (value_0 === "bailian") {
+                logEvent("tengu_oauth_bailian_selected", {});
+                setOAuthStatus({
+                  state: "bailian_api_key_input"
                 });
               } else if (value_0 === "codex") {
                 logEvent("tengu_oauth_codex_selected", {});
@@ -535,7 +546,7 @@ function OAuthStatusMessage(t0) {
         }
         let t7;
         if ($[19] === Symbol.for("react.memo_cache_sentinel")) {
-          t7 = <Box flexDirection="column" marginTop={1}>{t4}{t5}{t6}<Text>· Vertex AI:{" "}<Link url="https://code.claude.com/docs/en/google-vertex-ai">https://code.claude.com/docs/en/google-vertex-ai</Link></Text></Box>;
+          t7 = <Box flexDirection="column" marginTop={1}>{t4}{t5}{t6}<Text>· Vertex AI:{" "}<Link url="https://code.claude.com/docs/en/google-vertex-ai">https://code.claude.com/docs/en/google-vertex-ai</Link></Text><Text>· Ali Bailian: Set ANTHROPIC_BASE_URL to https://coding.dashscope.aliyuncs.com/apps/anthropic/v1</Text></Box>;
           $[19] = t7;
         } else {
           t7 = $[19];
@@ -604,6 +615,63 @@ function OAuthStatusMessage(t0) {
           t1 = $[38];
         }
         return t1;
+      }
+    case "bailian_api_key_input":
+      {
+        const BAILIAN_API_KEY_MSG = 'Paste Bailian API key here > ';
+        let t1;
+        if ($[60] === Symbol.for("react.memo_cache_sentinel")) {
+          t1 = <Text bold={true}>Ali Bailian (阿里百炼) Login</Text>;
+          $[60] = t1;
+        } else {
+          t1 = $[60];
+        }
+        let t2;
+        if ($[61] === Symbol.for("react.memo_cache_sentinel")) {
+          t2 = <Text>Enter your Bailian API key to use Claude Code with Ali Bailian.</Text>;
+          $[61] = t2;
+        } else {
+          t2 = $[61];
+        }
+        let t3;
+        if ($[62] !== cursorOffset || $[63] !== handleSubmitCode || $[64] !== setCursorOffset || $[65] !== setPastedCode || $[66] !== textInputColumns) {
+          t3 = <Box><Text>{BAILIAN_API_KEY_MSG}</Text><TextInput value={pastedCode} onChange={setPastedCode} onSubmit={async (value) => {
+              if (!value || value.trim().length === 0) {
+                setOAuthStatus({ state: "error", message: "API key cannot be empty", toRetry: { state: "bailian_api_key_input" } });
+                return;
+              }
+              try {
+                const { saveApiKey } = await import('../utils/auth.js');
+                await saveApiKey(value.trim());
+                process.env.ANTHROPIC_BASE_URL = 'https://coding.dashscope.aliyuncs.com/apps/anthropic/v1';
+                const { updateSettingsForSource } = await import('../utils/settings/settings.js');
+                updateSettingsForSource('fileSettings', {
+                  env: { ANTHROPIC_BASE_URL: 'https://coding.dashscope.aliyuncs.com/apps/anthropic/v1' }
+                });
+                logEvent("tengu_oauth_bailian_success", {});
+                setOAuthStatus({ state: "success" });
+              } catch (err) {
+                logError(err);
+                setOAuthStatus({ state: "error", message: (err as Error).message, toRetry: { state: "bailian_api_key_input" } });
+              }
+            }} cursorOffset={cursorOffset} onChangeCursorOffset={setCursorOffset} columns={textInputColumns} mask="*" /></Box>;
+          $[62] = cursorOffset;
+          $[63] = handleSubmitCode;
+          $[64] = setCursorOffset;
+          $[65] = setPastedCode;
+          $[66] = textInputColumns;
+          $[67] = t3;
+        } else {
+          t3 = $[67];
+        }
+        let t4;
+        if ($[68] === Symbol.for("react.memo_cache_sentinel")) {
+          t4 = <Box flexDirection="column" gap={1}>{t1}{t2}{t3}<Box marginTop={1}><Text dimColor={true}>Press <Text bold={true}>Enter</Text> to submit your API key.</Text></Box></Box>;
+          $[68] = t4;
+        } else {
+          t4 = $[68];
+        }
+        return t4;
       }
     case "about_to_retry":
       {

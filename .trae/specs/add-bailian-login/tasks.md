@@ -1,0 +1,31 @@
+# Tasks
+- [ ] Task 1: 分析现有登录流程和 API Key 配置机制
+  - [ ] SubTask 1.1: 查看 src/components/ConsoleOAuthFlow.tsx 的登录方法选择逻辑
+  - [ ] SubTask 1.2: 查看 src/utils/auth.ts 中的 API Key 处理函数
+  - [ ] SubTask 1.3: 查看 src/utils/model/providers.ts 的 provider 检测逻辑
+  - [ ] SubTask 1.4: 查看 src/commands/login/login.tsx 的登录入口
+- [ ] Task 2: 在登录方法选择界面添加阿里百炼选项
+  - [ ] SubTask 2.1: 在 ConsoleOAuthFlow.tsx 的 options 数组中添加阿里百炼选项
+  - [ ] SubTask 2.2: 添加阿里百炼选项的事件处理逻辑
+  - [ ] SubTask 2.3: 创建新的 OAuthStatus 状态 `bailian_api_key_input` 用于 API Key 输入
+- [ ] Task 3: 实现阿里百炼 API Key 输入和验证流程
+  - [ ] SubTask 3.1: 创建 API Key 输入界面组件
+  - [ ] SubTask 3.2: 实现 API Key 的验证逻辑
+  - [ ] SubTask 3.3: 保存 API Key 到配置中
+  - [ ] SubTask 3.4: 设置 ANTHROPIC_BASE_URL 为阿里百炼端点
+- [ ] Task 4: 修改 provider 检测逻辑以支持阿里百炼
+  - [ ] SubTask 4.1: 在 providers.ts 中添加 bailian provider 类型
+  - [ ] SubTask 4.2: 修改 getAPIProvider 函数以检测阿里百炼配置
+- [ ] Task 5: 在 platform_setup 界面添加阿里百炼文档链接
+  - [ ] SubTask 5.1: 在 OAuthStatusMessage 的 platform_setup case 中添加阿里百炼文档链接
+- [ ] Task 6: 测试登录流程
+  - [ ] SubTask 6.1: 验证阿里百炼选项出现在登录方法选择界面
+  - [ ] SubTask 6.2: 验证 API Key 输入和保存功能
+  - [ ] SubTask 6.3: 验证 provider 切换逻辑
+
+# Task Dependencies
+- [Task 2] depends on [Task 1]
+- [Task 3] depends on [Task 2]
+- [Task 4] depends on [Task 3]
+- [Task 5] depends on [Task 1]
+- [Task 6] depends on [Task 2, Task 3, Task 4, Task 5]
