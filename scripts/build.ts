@@ -9,6 +9,7 @@ const pkg = await Bun.file(new URL('../package.json', import.meta.url)).json() a
 const args = process.argv.slice(2)
 const compile = args.includes('--compile')
 const dev = args.includes('--dev')
+const noAvx2 = args.includes('--no-avx2')
 
 const fullExperimentalFeatures = [
   'AGENT_MEMORY_SNAPSHOT',
@@ -164,7 +165,7 @@ const cmd = [
   './src/entrypoints/cli.tsx',
   '--compile',
   '--target',
-  'bun',
+  noAvx2 ? 'bun-baseline' : 'bun',
   '--format',
   'esm',
   '--outfile',
