@@ -64,7 +64,9 @@ jobs:
         if: matrix.os == 'ubuntu-latest' && matrix.avx2 == true
         run: |
           mkdir -p artifacts
-          if [ -f cli ]; then
+          if [ -f dist/cli ]; then
+            cp dist/cli artifacts/claude-linux-avx2
+          elif [ -f cli ]; then
             cp cli artifacts/claude-linux-avx2
           fi
 
@@ -72,7 +74,9 @@ jobs:
         if: matrix.os == 'ubuntu-latest' && matrix.avx2 == false
         run: |
           mkdir -p artifacts
-          if [ -f cli ]; then
+          if [ -f dist/cli ]; then
+            cp dist/cli artifacts/claude-linux-no-avx2
+          elif [ -f cli ]; then
             cp cli artifacts/claude-linux-no-avx2
           fi
 
@@ -80,7 +84,9 @@ jobs:
         if: matrix.os == 'windows-latest' && matrix.avx2 == true
         run: |
           mkdir -p artifacts
-          if (Test-Path cli.exe) {
+          if (Test-Path dist/cli.exe) {
+            Copy-Item dist/cli.exe artifacts/claude-windows-avx2.exe
+          } elseif (Test-Path cli.exe) {
             Copy-Item cli.exe artifacts/claude-windows-avx2.exe
           }
         shell: pwsh
@@ -89,7 +95,9 @@ jobs:
         if: matrix.os == 'windows-latest' && matrix.avx2 == false
         run: |
           mkdir -p artifacts
-          if (Test-Path cli.exe) {
+          if (Test-Path dist/cli.exe) {
+            Copy-Item dist/cli.exe artifacts/claude-windows-no-avx2.exe
+          } elseif (Test-Path cli.exe) {
             Copy-Item cli.exe artifacts/claude-windows-no-avx2.exe
           }
         shell: pwsh
