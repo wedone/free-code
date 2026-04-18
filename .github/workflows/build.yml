@@ -18,8 +18,16 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest]
-        avx2: [true, false]
+        include:
+          - os: ubuntu-latest
+            avx2: true
+          - os: ubuntu-latest
+            avx2: false
+          - os: windows-latest
+            avx2: true
+          - os: windows-latest
+            avx2: false
+            bun_version: 'baseline'
       fail-fast: false
 
     steps:
@@ -28,10 +36,18 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Bun
+      - name: Setup Bun (AVX2)
+        if: matrix.bun_version != 'baseline'
         uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
+
+      - name: Setup Bun (Baseline - No AVX2)
+        if: matrix.bun_version == 'baseline'
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+          baseline: true
 
       - name: Install dependencies
         run: bun install

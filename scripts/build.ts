@@ -159,13 +159,17 @@ const defines = {
   ),
 } as const
 
+// Windows uses baseline bun installation instead of target flag
+const isWindows = process.platform === 'win32'
+const target = noAvx2 && !isWindows ? 'bun-baseline' : 'bun'
+
 const cmd = [
   'bun',
   'build',
   './src/entrypoints/cli.tsx',
   '--compile',
   '--target',
-  noAvx2 ? 'bun-baseline' : 'bun',
+  target,
   '--format',
   'esm',
   '--outfile',
