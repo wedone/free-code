@@ -14,20 +14,31 @@ env:
 
 jobs:
   build:
-    name: Build ${{ matrix.os }} (${{ matrix.avx2 == true && 'AVX2' || 'No AVX2' }})
+    name: Build ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         include:
-          - os: ubuntu-latest
+          - os: ubuntu-20.04
+            name: 'Linux AVX2'
             avx2: true
-          - os: ubuntu-latest
+            bun_baseline: false
+            artifact_name: 'claude-linux-avx2'
+          - os: ubuntu-20.04
+            name: 'Linux No AVX2 (Compatible)'
             avx2: false
+            bun_baseline: true
+            artifact_name: 'claude-linux-no-avx2'
           - os: windows-latest
+            name: 'Windows AVX2'
             avx2: true
+            bun_baseline: false
+            artifact_name: 'claude-windows-avx2.exe'
           - os: windows-latest
+            name: 'Windows No AVX2 (Compatible)'
             avx2: false
-            bun_version: 'baseline'
+            bun_baseline: true
+            artifact_name: 'claude-windows-no-avx2.exe'
       fail-fast: false
 
     steps:
@@ -36,14 +47,14 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Bun (AVX2)
-        if: matrix.bun_version != 'baseline'
+      - name: Setup Bun (Standard)
+        if: matrix.bun_baseline == false
         uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
 
       - name: Setup Bun (Baseline - No AVX2)
-        if: matrix.bun_version == 'baseline'
+        if: matrix.bun_baseline == true
         uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
@@ -60,53 +71,51 @@ jobs:
         if: matrix.avx2 == false
         run: bun run ./scripts/build.ts --compile --no-avx2
 
-      - name: Rename artifacts (Linux AVX2)
-        if: matrix.os == 'ubuntu-latest' && matrix.avx2 == true
+      - name: Prepare artifacts (Linux)
+        if: matrix.os == 'ubuntu-20.04'
         run: |
           mkdir -p artifacts
           if [ -f dist/cli ]; then
-            cp dist/cli artifacts/claude-linux-avx2
+            cp dist/cli artifacts/${{ matrix.artifact_name }}
           elif [ -f cli ]; then
-            cp cli artifacts/claude-linux-avx2
+            cp cli artifacts/${{ matrix.artifact_name }}
           fi
+          ls -la artifacts/
 
-      - name: Rename artifacts (Linux No AVX2)
-        if: matrix.os == 'ubuntu-latest' && matrix.avx2 == false
-        run: |
-          mkdir -p artifacts
-          if [ -f dist/cli ]; then
-            cp dist/cli artifacts/claude-linux-no-avx2
-          elif [ -f cli ]; then
-            cp cli artifacts/claude-linux-no-avx2
-          fi
-
-      - name: Rename artifacts (Windows AVX2)
-        if: matrix.os == 'windows-latest' && matrix.avx2 == true
+      - name: Prepare artifacts (Windows)
+        if: matrix.os == 'windows-latest'
         run: |
           mkdir -p artifacts
           if (Test-Path dist/cli.exe) {
-            Copy-Item dist/cli.exe artifacts/claude-windows-avx2.exe
+            Copy-Item dist/cli.exe artifacts/${{ matrix.artifact_name }}
           } elseif (Test-Path cli.exe) {
-            Copy-Item cli.exe artifacts/claude-windows-avx2.exe
+            Copy-Item cli.exe artifacts/${{ matrix.artifact_name }}
           }
+          Get-ChildItem artifacts/
         shell: pwsh
 
-      - name: Rename artifacts (Windows No AVX2)
-        if: matrix.os == 'windows-latest' && matrix.avx2 == false
+      - name: Compress artifacts (Linux)
+        if: matrix.os == 'ubuntu-20.04'
         run: |
-          mkdir -p artifacts
-          if (Test-Path dist/cli.exe) {
-            Copy-Item dist/cli.exe artifacts/claude-windows-no-avx2.exe
-          } elseif (Test-Path cli.exe) {
-            Copy-Item cli.exe artifacts/claude-windows-no-avx2.exe
-          }
+          cd artifacts
+          tar -czf ${{ matrix.artifact_name }}.tar.gz ${{ matrix.artifact_name }}
+          rm ${{ matrix.artifact_name }}
+          ls -la
+
+      - name: Compress artifacts (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          cd artifacts
+          Compress-Archive -Path ${{ matrix.artifact_name }} -DestinationPath ${{ matrix.artifact_name }}.zip
+          Remove-Item ${{ matrix.artifact_name }}
+          Get-ChildItem
         shell: pwsh
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: claude-${{ matrix.os == 'ubuntu-latest' && 'linux' || 'windows' }}-${{ matrix.avx2 == true && 'avx2' || 'no-avx2' }}
-          path: artifacts/
+          name: ${{ matrix.artifact_name }}
+          path: artifacts/*
           retention-days: 30
 
   release:
@@ -124,13 +133,18 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: artifacts
+          merge-multiple: true
+
+      - name: List downloaded artifacts
+        run: |
+          ls -la artifacts/
 
       - name: Create Release (on tag)
         if: github.event_name == 'release'
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            artifacts/**/*
+            artifacts/*
           draft: false
           prerelease: false
         env:
@@ -143,7 +157,7 @@ jobs:
           tag_name: nightly-${{ github.sha }}
           name: Nightly Build
           files: |
-            artifacts/**/*
+            artifacts/*
           draft: false
           prerelease: true
           generate_release_notes: true
