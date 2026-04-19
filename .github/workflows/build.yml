@@ -19,12 +19,12 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: ubuntu-20.04
+          - os: ubuntu-latest
             name: 'Linux AVX2'
             avx2: true
             bun_baseline: false
             artifact_name: 'claude-linux-avx2'
-          - os: ubuntu-20.04
+          - os: ubuntu-latest
             name: 'Linux No AVX2 (Compatible)'
             avx2: false
             bun_baseline: true
@@ -53,19 +53,22 @@ jobs:
           bun-version: latest
 
       - name: Setup Bun Baseline (Linux No AVX2)
-        if: matrix.bun_baseline == true && matrix.os == 'ubuntu-20.04'
+        if: matrix.bun_baseline == true && runner.os == 'Linux'
         run: |
           # Install baseline version of Bun for better compatibility
           curl -fsSL https://bun.sh/install | bash -s "bun-v$(bun --version)"
           echo "$HOME/.bun/bin" >> $GITHUB_PATH
+          $HOME/.bun/bin/bun --version
 
       - name: Setup Bun Baseline (Windows No AVX2)
-        if: matrix.bun_baseline == true && matrix.os == 'windows-latest'
+        if: matrix.bun_baseline == true && runner.os == 'Windows'
         run: |
           # Install baseline version of Bun for better compatibility
           powershell -c "irm bun.sh/install.ps1|iex"
-          echo "$HOME/.bun/bin" >> $GITHUB_PATH
         shell: bash
+
+      - name: Verify Bun version
+        run: bun --version
 
       - name: Install dependencies
         run: bun install
@@ -79,7 +82,7 @@ jobs:
         run: bun run ./scripts/build.ts --compile --no-avx2
 
       - name: Prepare artifacts (Linux)
-        if: matrix.os == 'ubuntu-20.04'
+        if: runner.os == 'Linux'
         run: |
           mkdir -p artifacts
           if [ -f dist/cli ]; then
@@ -90,7 +93,7 @@ jobs:
           ls -la artifacts/
 
       - name: Prepare artifacts (Windows)
-        if: matrix.os == 'windows-latest'
+        if: runner.os == 'Windows'
         run: |
           mkdir -p artifacts
           if (Test-Path dist/cli.exe) {
@@ -102,7 +105,7 @@ jobs:
         shell: pwsh
 
       - name: Compress artifacts (Linux)
-        if: matrix.os == 'ubuntu-20.04'
+        if: runner.os == 'Linux'
         run: |
           cd artifacts
           tar -czf ${{ matrix.artifact_name }}.tar.gz ${{ matrix.artifact_name }}
@@ -110,7 +113,7 @@ jobs:
           ls -la
 
       - name: Compress artifacts (Windows)
-        if: matrix.os == 'windows-latest'
+        if: runner.os == 'Windows'
         run: |
           cd artifacts
           Compress-Archive -Path ${{ matrix.artifact_name }} -DestinationPath ${{ matrix.artifact_name }}.zip
